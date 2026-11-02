@@ -71,3 +71,13 @@ body.ro #imp,body.ro #logoBtn,body.ro [data-e],body.ro [data-d],body.ro nav butt
 .spacer{margin-inline-start:auto}
 a.btn{text-decoration:none;display:inline-block}
 
+input[type=radio]{width:18px;height:18px;padding:0;accent-color:var(--brand);cursor:pointer}
+fieldset{border:0;padding:0;margin:0}
+legend{padding:0;color:var(--muted);font-size:.88rem;margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border:1px solid var(--line);border-radius:99px;cursor:pointer;color:var(--ink);font-size:.9rem;margin:0}
+.chip.on{background:var(--blue-bg);border-color:var(--brand)}
+.svc-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.svc .meta{margin:4px 0;color:var(--muted);font-size:.9rem}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:24px}
+.cols h3{margin:0 0 10px;font-size:1rem}
