@@ -26,5 +26,9 @@ export function cleanService(s) {
   const id = str(s.id, 64);
   const t = str(s.t).trim();
   if (!/^[\w-]+$/.test(id) || !t) return null;
-  return { id, g: s.g === 'd' ? 'd' : 'w', t, w: str(s.w), b: str(s.b, 2000) };
+  const types = Array.isArray(s.types)
+    ? [...new Set(s.types.map((x) => str(x, 60).trim()).filter(Boolean))].slice(0, 12)
+    : [];
+  const status = ['ongoing', 'ondemand', 'planned'].includes(s.status) ? s.status : '';
+  return { id, g: s.g === 'd' ? 'd' : 'w', t, w: str(s.w), types, status, b: str(s.b, 4000) };
 }
