@@ -77,6 +77,17 @@ export default function App() {
     try { await api.deleteEmployee(emp.id); await load(); } catch (e) { fail(e); }
   };
 
+  const onBulkDelete = async (ids) => {
+    if (!ids.length) return false;
+    if (!(await ask(`هل تريد حذف ${ids.length} موظف نهائياً؟ لا يمكن التراجع عن ذلك.`))) return false;
+    try {
+      await api.deleteEmployees(ids);
+      await load();
+      say(`تم حذف ${ids.length} موظف.`);
+      return true;
+    } catch (e) { fail(e); return false; }
+  };
+
   const onImport = async (file) => {
     try {
       const r = await parseEmployees(await file.arrayBuffer(), emps);
@@ -175,7 +186,7 @@ export default function App() {
         {tab === 'list' && (
           <section className="panel on">
             <EmployeeList
-              emps={emps} onImport={onImport} onCopy={onCopy} onDelete={onDelete}
+              emps={emps} onImport={onImport} onCopy={onCopy} onDelete={onDelete} onBulkDelete={onBulkDelete}
               onEdit={(e) => { setEditing(e); setTab('form'); }}
             />
           </section>
