@@ -20,6 +20,7 @@ export const api = {
   logout: () => req('/api/session', { method: 'DELETE' }),
   employees: () => req('/api/employees'),
   saveEmployees: (employees) => req('/api/employees', { method: 'POST', ...body({ employees }) }),
+  deleteEmployees: (ids) => req('/api/employees', { method: 'POST', ...body({ deleteIds: ids }) }),
   deleteEmployee: (id) => req(`/api/employees?id=${encodeURIComponent(id)}`, { method: 'DELETE' }),
   services: () => req('/api/services'),
   saveService: (service) => req('/api/services', { method: 'POST', ...body({ service }) }),
