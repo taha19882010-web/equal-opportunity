@@ -57,7 +57,7 @@ export default function EmployeeList({ emps, onEdit, onDelete, onImport, onCopy 
                   <tr key={e.id}>
                     <td>
                       <b>{e.name}</b><br /><span className="note">{e.eid}</span><br />
-                      {e.gender === 'f' && <span className="tag t-w">امرأة</span>}
+                      <span className={`tag ${e.gender === 'f' ? 't-w' : 't-m'}`}>{e.gender === 'f' ? 'أنثى' : 'ذكر'}</span>
                       {e.dis && <span className="tag t-d">إعاقة {e.dis}</span>}
                     </td>
                     <td>{e.dept}<br /><span className="note">{e.job}{e.grade ? ' - ' + e.grade : ''}</span></td>
