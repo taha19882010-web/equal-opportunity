@@ -16,7 +16,7 @@ const TABS = [
 export default function App() {
   const [role, setRole] = useState(undefined); // undefined = checking, null = logged out
   const [emps, setEmps] = useState([]);
-  const [custom, setCustom] = useState([]);
+  const [services, setServices] = useState([]);
   const [logo, setLogo] = useState('');
   const [tab, setTab] = useState('list');
   const [editing, setEditing] = useState(null);
@@ -34,7 +34,7 @@ export default function App() {
     try {
       const [e, s] = await Promise.all([api.employees(), api.services()]);
       setEmps(e);
-      setCustom(s);
+      setServices(s);
       setSync('متصل: البيانات مشتركة بين كل المصرّح لهم.');
     } catch (e) {
       if (e.status === 401) setRole(null);
@@ -106,10 +106,11 @@ export default function App() {
     catch { say('تعذّر النسخ.'); }
   };
 
-  const onAddService = async (n) => {
+  const onSaveService = async (sv) => {
     try {
-      await api.saveService({ ...n, id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) });
+      await api.saveService({ ...sv, id: sv.id || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())) });
       await load();
+      say('تم حفظ الخدمة.');
       return true;
     } catch (e) { fail(e); return false; }
   };
@@ -198,7 +199,7 @@ export default function App() {
         )}
         {tab === 'svc' && (
           <section className="panel on">
-            <Services custom={custom} emps={emps} canEdit={canEdit} onAdd={onAddService} onDelete={onDeleteService} />
+            <Services services={services} emps={emps} canEdit={canEdit} onSave={onSaveService} onDelete={onDeleteService} />
           </section>
         )}
       </main>
