@@ -7,8 +7,10 @@ import EmployeeList from './EmployeeList.jsx';
 import EmployeeForm from './EmployeeForm.jsx';
 import Services from './Services.jsx';
 import ServiceForm from './ServiceForm.jsx';
-import { EmployeeStats, ServiceStats } from './Stats.jsx';
-import { exportStats } from './stats.js';
+import UsersAdmin, { ROLE_LABEL } from './UsersAdmin.jsx';
+import Account from './Account.jsx';
+import { EmployeeStats, ServiceStats } from './StatsPages.jsx';
+import { exportStats } from './statsLib.js';
 
 const NAV = [
   { k: 'list', t: 'الموظفون' },
@@ -16,9 +18,13 @@ const NAV = [
   { k: 'svc', t: 'الخدمات المقدمة' },
   { k: 'sform', t: 'إضافة خدمة' },
   { k: 'stats', t: 'الإحصائيات', sub: [['stats-emps', 'إحصائيات الموظفين'], ['stats-svc', 'إحصائيات الخدمات']] },
+  { k: 'users', t: 'المستخدمون', admin: true },
+  { k: 'account', t: 'حسابي' },
 ];
 
 export default function App() {
+  const [me, setMe] = useState(null);
+  const [users, setUsers] = useState([]);
   const [role, setRole] = useState(undefined); // undefined = checking, null = logged out
   const [emps, setEmps] = useState([]);
   const [services, setServices] = useState([]);
@@ -30,7 +36,8 @@ export default function App() {
   const [sync, setSync] = useState('جارٍ تحميل البيانات...');
   const { say, ask, ui } = useUI();
   const logoInput = useRef();
-  const canEdit = role === 'admin';
+  const canEdit = role === 'admin' || role === 'editor';
+  const pendingCount = users.filter((u) => u.role === 'pending').length;
 
   const fail = useCallback((e) => {
     if (e.status === 401) setRole(null);
@@ -50,7 +57,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    api.session().then((r) => setRole(r.role)).catch(() => setRole(null));
+    api.session().then((r) => { setMe(r.user); setRole(r.user.role); }).catch(() => setRole(null));
   }, []);
 
   useEffect(() => {
@@ -61,6 +68,28 @@ export default function App() {
     const t = setInterval(load, 30000); // picks up changes made by others
     return () => clearInterval(t);
   }, [role, load]);
+
+  const loadUsers = useCallback(() => api.users().then(setUsers).catch(() => {}), []);
+  useEffect(() => {
+    if (role !== 'admin') return;
+    loadUsers();
+    const t = setInterval(loadUsers, 30000);
+    return () => clearInterval(t);
+  }, [role, loadUsers]);
+
+  const onUserRole = async (u, r) => {
+    try { await api.updateUser(u.id, { role: r }); await loadUsers(); say('تم تحديث الصلاحية.'); } catch (e) { fail(e); }
+  };
+  const onUserPassword = async (u, password) => {
+    try { await api.updateUser(u.id, { password }); say('تم تعيين كلمة المرور الجديدة.'); return true; } catch (e) { fail(e); return false; }
+  };
+  const onUserDelete = async (u) => {
+    if (!(await ask(`هل تريد حذف حساب «${u.username}»؟`))) return;
+    try { await api.deleteUser(u.id); await loadUsers(); } catch (e) { fail(e); }
+  };
+  const onChangePassword = async (oldPassword, newPassword) => {
+    try { await api.changePassword(oldPassword, newPassword); say('تم تغيير كلمة المرور.'); return true; } catch (e) { say(e.message); return false; }
+  };
 
   const saveEmployees = async (list) => {
     try {
@@ -165,11 +194,13 @@ export default function App() {
   const logout = async () => {
     try { await api.logout(); } catch { /* ignore */ }
     setRole(null);
+    setMe(null);
     setEmps([]);
+    setUsers([]);
   };
 
   if (role === undefined) return <main><p className="empty" style={{ color: '#d6f3f4' }}>جارٍ التحميل...</p></main>;
-  if (!role) return <Login onLogin={setRole} />;
+  if (!role) return <Login onLogin={(u) => { setMe(u); setRole(u.role); }} />;
 
   return (
     <div className="shell">
@@ -188,7 +219,7 @@ export default function App() {
           </div>
         </div>
         <nav role="tablist" aria-orientation="vertical">
-          {NAV.map((n) => n.sub ? (
+          {NAV.filter((n) => !n.admin || role === 'admin').map((n) => n.sub ? (
             <div className="navgroup" key={n.k}>
               <button
                 className={`grp${tab.startsWith('stats') ? ' on' : ''}`} aria-expanded={statsOpen}
@@ -205,11 +236,12 @@ export default function App() {
               key={n.k} role="tab" data-t={n.k} aria-selected={tab === n.k}
               onClick={() => { setTab(n.k); if (n.k === 'form') setEditing(null); if (n.k === 'sform') setEditingSvc(null); }}
             >
-              {n.t}
+              {n.t}{n.k === 'users' && pendingCount > 0 && <span className="badge">{pendingCount}</span>}
             </button>
           ))}
         </nav>
         <div className="side-foot">
+          <div className="whoami">{me?.fullName || me?.username} · {ROLE_LABEL[role]}</div>
           <div id="sync" role="status">
             {role === 'viewer' ? 'عرض فقط: ليس لديك صلاحية التعديل. ' : ''}{sync}
           </div>
@@ -250,6 +282,16 @@ export default function App() {
           {tab === 'stats-svc' && (
             <section className="panel on">
               <ServiceStats services={services} onExport={() => onExport('svc')} />
+            </section>
+          )}
+          {tab === 'users' && role === 'admin' && (
+            <section className="panel on">
+              <UsersAdmin users={users} me={me} onRole={onUserRole} onPassword={onUserPassword} onDelete={onUserDelete} />
+            </section>
+          )}
+          {tab === 'account' && (
+            <section className="panel on">
+              <Account me={me} onChangePassword={onChangePassword} />
             </section>
           )}
         </main>
