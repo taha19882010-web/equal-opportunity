@@ -21,6 +21,14 @@ export function ready() {
         key text PRIMARY KEY,
         value jsonb NOT NULL
       )`;
+      await sql`CREATE TABLE IF NOT EXISTS files (
+        id text PRIMARY KEY,
+        name text NOT NULL,
+        mime text NOT NULL,
+        size int NOT NULL,
+        data text NOT NULL,
+        created_at timestamptz DEFAULT now()
+      )`;
     })().catch((e) => { init = undefined; throw e; });
   }
   return init;
