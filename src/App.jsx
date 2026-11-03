@@ -6,11 +6,14 @@ import Login from './Login.jsx';
 import EmployeeList from './EmployeeList.jsx';
 import EmployeeForm from './EmployeeForm.jsx';
 import Services from './Services.jsx';
+import Stats from './Stats.jsx';
+import { exportStats } from './stats.js';
 
 const TABS = [
   ['list', 'الموظفون'],
   ['form', 'إضافة / تعديل موظف'],
   ['svc', 'الخدمات المقدمة'],
+  ['stats', 'الإحصائيات'],
 ];
 
 export default function App() {
@@ -88,6 +91,11 @@ export default function App() {
     } catch (e) { fail(e); return false; }
   };
 
+  const onExport = async () => {
+    try { await exportStats(emps, services); say('تم تنزيل ملف الإحصائيات.'); }
+    catch { say('تعذّر إنشاء ملف Excel.'); }
+  };
+
   const onImport = async (file) => {
     try {
       const r = await parseEmployees(await file.arrayBuffer(), emps);
@@ -148,13 +156,13 @@ export default function App() {
     setEmps([]);
   };
 
-  if (role === undefined) return <main><p className="empty" style={{ color: '#c3cfe6' }}>جارٍ التحميل...</p></main>;
+  if (role === undefined) return <main><p className="empty" style={{ color: '#d6f3f4' }}>جارٍ التحميل...</p></main>;
   if (!role) return <Login onLogin={setRole} />;
 
   return (
-    <>
-      <header>
-        <div className="hrow">
+    <div className="shell">
+      <aside className="side">
+        <div className="side-top">
           <button
             className={`logo${logo ? ' has' : ''}`} id="logoBtn" type="button"
             title="اضغط لرفع أو تغيير شعار الجامعة" onClick={() => logoInput.current.click()}
@@ -165,45 +173,54 @@ export default function App() {
           <div>
             <div className="uni">جامعة أسيوط</div>
             <h1>تكافؤ الفرص</h1>
-            <p>سجّل بيانات الموظفين وقيّم جاهزيتهم للقيادة، وتعرّف على الخدمات المتاحة للمرأة وذوي الإعاقة.</p>
           </div>
         </div>
-      </header>
-      <div id="sync" role="status">
-        {role === 'viewer' ? 'عرض فقط: ليس لديك صلاحية التعديل. ' : ''}{sync}
+        <nav role="tablist" aria-orientation="vertical">
+          {TABS.map(([k, t]) => (
+            <button
+              key={k} role="tab" data-t={k} aria-selected={tab === k}
+              onClick={() => { setTab(k); if (k === 'form') setEditing(null); }}
+            >
+              {t}
+            </button>
+          ))}
+        </nav>
+        <div className="side-foot">
+          <div id="sync" role="status">
+            {role === 'viewer' ? 'عرض فقط: ليس لديك صلاحية التعديل. ' : ''}{sync}
+          </div>
+          <button className="logout" onClick={logout}>تسجيل الخروج</button>
+        </div>
+      </aside>
+
+      <div className="content">
+        <main>
+          {tab === 'list' && (
+            <section className="panel on">
+              <EmployeeList
+                emps={emps} onImport={onImport} onCopy={onCopy} onDelete={onDelete} onBulkDelete={onBulkDelete}
+                onEdit={(e) => { setEditing(e); setTab('form'); }}
+              />
+            </section>
+          )}
+          {tab === 'form' && canEdit && (
+            <section className="panel on">
+              <EmployeeForm key={editing?.id || 'new'} initial={editing} emps={emps} onSave={onSaveOne} />
+            </section>
+          )}
+          {tab === 'svc' && (
+            <section className="panel on">
+              <Services services={services} emps={emps} canEdit={canEdit} onSave={onSaveService} onDelete={onDeleteService} onExport={onExport} />
+            </section>
+          )}
+          {tab === 'stats' && (
+            <section className="panel on">
+              <Stats emps={emps} services={services} onExport={onExport} />
+            </section>
+          )}
+        </main>
       </div>
-      <nav role="tablist">
-        {TABS.map(([k, t]) => (
-          <button
-            key={k} role="tab" data-t={k} aria-selected={tab === k}
-            onClick={() => { setTab(k); if (k === 'form') setEditing(null); }}
-          >
-            {t}
-          </button>
-        ))}
-        <button className="spacer" onClick={logout}>خروج</button>
-      </nav>
-      <main>
-        {tab === 'list' && (
-          <section className="panel on">
-            <EmployeeList
-              emps={emps} onImport={onImport} onCopy={onCopy} onDelete={onDelete} onBulkDelete={onBulkDelete}
-              onEdit={(e) => { setEditing(e); setTab('form'); }}
-            />
-          </section>
-        )}
-        {tab === 'form' && canEdit && (
-          <section className="panel on">
-            <EmployeeForm key={editing?.id || 'new'} initial={editing} emps={emps} onSave={onSaveOne} />
-          </section>
-        )}
-        {tab === 'svc' && (
-          <section className="panel on">
-            <Services services={services} emps={emps} canEdit={canEdit} onSave={onSaveService} onDelete={onDeleteService} />
-          </section>
-        )}
-      </main>
       {ui}
-    </>
+    </div>
   );
 }
