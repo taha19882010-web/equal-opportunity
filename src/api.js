@@ -12,6 +12,7 @@ async function req(path, opts = {}) {
   }
   return j;
 }
+export const fileUrl = (id) => `/api/files?id=${encodeURIComponent(id)}`;
 const body = (o) => ({ body: JSON.stringify(o) });
 
 export const api = {
@@ -25,6 +26,15 @@ export const api = {
   services: () => req('/api/services'),
   saveService: (service) => req('/api/services', { method: 'POST', ...body({ service }) }),
   deleteService: (id) => req(`/api/services?id=${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  uploadFile: async (file) => {
+    const data = await new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(String(r.result).split(',')[1]);
+      r.onerror = () => rej(new Error('تعذّرت قراءة الملف.'));
+      r.readAsDataURL(file);
+    });
+    return req('/api/files', { method: 'POST', ...body({ name: file.name, mime: file.type, data }) });
+  },
   getLogo: () => req('/api/settings?key=logo'),
   setLogo: (value) => req('/api/settings', { method: 'PUT', ...body({ key: 'logo', value }) }),
 };
