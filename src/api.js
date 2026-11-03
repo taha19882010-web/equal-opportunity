@@ -17,7 +17,13 @@ const body = (o) => ({ body: JSON.stringify(o) });
 
 export const api = {
   session: () => req('/api/session'),
-  login: (password) => req('/api/session', { method: 'POST', ...body({ password }) }),
+  login: (username, password) => req('/api/session', { method: 'POST', ...body({ username, password }) }),
+  signupEnabled: () => req('/api/register'),
+  register: (data) => req('/api/register', { method: 'POST', ...body(data) }),
+  changePassword: (oldPassword, newPassword) => req('/api/account', { method: 'POST', ...body({ oldPassword, newPassword }) }),
+  users: () => req('/api/users'),
+  updateUser: (id, patch) => req('/api/users', { method: 'PATCH', ...body({ id, ...patch }) }),
+  deleteUser: (id) => req(`/api/users?id=${encodeURIComponent(id)}`, { method: 'DELETE' }),
   logout: () => req('/api/session', { method: 'DELETE' }),
   employees: () => req('/api/employees'),
   saveEmployees: (employees) => req('/api/employees', { method: 'POST', ...body({ employees }) }),
