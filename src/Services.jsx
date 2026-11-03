@@ -1,28 +1,13 @@
 import { useMemo, useRef, useState } from 'react';
 import { STATUS, TYPES } from './data.js';
+import Bars from './Bars.jsx';
+import { tally } from './stats.js';
 
 const EMPTY = { g: 'w', t: '', w: '', types: [], status: '', b: '' };
 const GROUP = { w: 'المرأة', d: 'ذوو الإعاقة' };
 const STATUS_TAG = { ongoing: 't-ready', ondemand: 't-mid', planned: 't-w' };
 
-const tally = (items) => {
-  const m = new Map();
-  items.forEach((k) => m.set(k, (m.get(k) || 0) + 1));
-  return [...m].sort((a, b) => b[1] - a[1]);
-};
-
-function Bars({ rows }) {
-  if (!rows.length) return <p className="note">لا توجد بيانات.</p>;
-  const max = Math.max(1, ...rows.map((r) => r[1]));
-  return rows.map(([label, n]) => (
-    <div key={label} style={{ marginBottom: 8 }}>
-      <div className="row" style={{ justifyContent: 'space-between' }}><span>{label}</span><b>{n}</b></div>
-      <div className="bar"><i style={{ width: `${(n / max) * 100}%` }} /></div>
-    </div>
-  ));
-}
-
-export default function Services({ services, emps, canEdit, onSave, onDelete }) {
+export default function Services({ services, emps, canEdit, onSave, onDelete, onExport }) {
   const [g, setG] = useState('');
   const [st, setSt] = useState('');
   const [ty, setTy] = useState('');
@@ -93,7 +78,7 @@ export default function Services({ services, emps, canEdit, onSave, onDelete }) 
       </div>
 
       <div className="card">
-        <h2>إحصائيات الخدمات</h2>
+        <div className="svc-head"><h2>إحصائيات الخدمات</h2><button className="btn ghost sm" onClick={onExport}>تنزيل الإحصائيات Excel</button></div>
         <div className="cols">
           <div><h3>حسب الفئة</h3><Bars rows={stats.byGroup} /></div>
           <div><h3>حسب حالة الخدمة</h3><Bars rows={stats.byStatus} /></div>
