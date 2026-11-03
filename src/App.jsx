@@ -6,14 +6,16 @@ import Login from './Login.jsx';
 import EmployeeList from './EmployeeList.jsx';
 import EmployeeForm from './EmployeeForm.jsx';
 import Services from './Services.jsx';
-import Stats from './Stats.jsx';
+import ServiceForm from './ServiceForm.jsx';
+import { EmployeeStats, ServiceStats } from './Stats.jsx';
 import { exportStats } from './stats.js';
 
-const TABS = [
-  ['list', 'الموظفون'],
-  ['form', 'إضافة / تعديل موظف'],
-  ['svc', 'الخدمات المقدمة'],
-  ['stats', 'الإحصائيات'],
+const NAV = [
+  { k: 'list', t: 'الموظفون' },
+  { k: 'form', t: 'إضافة / تعديل موظف' },
+  { k: 'svc', t: 'الخدمات المقدمة' },
+  { k: 'sform', t: 'إضافة خدمة' },
+  { k: 'stats', t: 'الإحصائيات', sub: [['stats-emps', 'إحصائيات الموظفين'], ['stats-svc', 'إحصائيات الخدمات']] },
 ];
 
 export default function App() {
@@ -23,6 +25,8 @@ export default function App() {
   const [logo, setLogo] = useState('');
   const [tab, setTab] = useState('list');
   const [editing, setEditing] = useState(null);
+  const [editingSvc, setEditingSvc] = useState(null);
+  const [statsOpen, setStatsOpen] = useState(false);
   const [sync, setSync] = useState('جارٍ تحميل البيانات...');
   const { say, ask, ui } = useUI();
   const logoInput = useRef();
@@ -91,8 +95,16 @@ export default function App() {
     } catch (e) { fail(e); return false; }
   };
 
-  const onExport = async () => {
-    try { await exportStats(emps, services); say('تم تنزيل ملف الإحصائيات.'); }
+  const onEditService = (sv) => { setEditingSvc(sv); setTab('sform'); };
+
+  const onSaveServiceForm = async (sv) => {
+    const ok = await onSaveService(sv);
+    if (ok) { setEditingSvc(null); setTab('svc'); }
+    return ok;
+  };
+
+  const onExport = async (which = 'all') => {
+    try { await exportStats(emps, services, which); say('تم تنزيل ملف الإحصائيات.'); }
     catch { say('تعذّر إنشاء ملف Excel.'); }
   };
 
@@ -176,12 +188,24 @@ export default function App() {
           </div>
         </div>
         <nav role="tablist" aria-orientation="vertical">
-          {TABS.map(([k, t]) => (
+          {NAV.map((n) => n.sub ? (
+            <div className="navgroup" key={n.k}>
+              <button
+                className={`grp${tab.startsWith('stats') ? ' on' : ''}`} aria-expanded={statsOpen}
+                onClick={() => { const next = !statsOpen; setStatsOpen(next); if (next && !tab.startsWith('stats')) setTab('stats-emps'); }}
+              >
+                {n.t} <span aria-hidden="true">{statsOpen ? '▾' : '◂'}</span>
+              </button>
+              {statsOpen && n.sub.map(([k, t]) => (
+                <button key={k} className="sub" role="tab" data-t={k} aria-selected={tab === k} onClick={() => setTab(k)}>{t}</button>
+              ))}
+            </div>
+          ) : (
             <button
-              key={k} role="tab" data-t={k} aria-selected={tab === k}
-              onClick={() => { setTab(k); if (k === 'form') setEditing(null); }}
+              key={n.k} role="tab" data-t={n.k} aria-selected={tab === n.k}
+              onClick={() => { setTab(n.k); if (n.k === 'form') setEditing(null); if (n.k === 'sform') setEditingSvc(null); }}
             >
-              {t}
+              {n.t}
             </button>
           ))}
         </nav>
@@ -210,12 +234,22 @@ export default function App() {
           )}
           {tab === 'svc' && (
             <section className="panel on">
-              <Services services={services} emps={emps} canEdit={canEdit} onSave={onSaveService} onDelete={onDeleteService} onExport={onExport} />
+              <Services services={services} emps={emps} canEdit={canEdit} onEdit={onEditService} onDelete={onDeleteService} />
             </section>
           )}
-          {tab === 'stats' && (
+          {tab === 'sform' && canEdit && (
             <section className="panel on">
-              <Stats emps={emps} services={services} onExport={onExport} />
+              <ServiceForm key={editingSvc?.id || 'new'} initial={editingSvc} services={services} emps={emps} onSave={onSaveServiceForm} />
+            </section>
+          )}
+          {tab === 'stats-emps' && (
+            <section className="panel on">
+              <EmployeeStats emps={emps} onExport={() => onExport('emps')} />
+            </section>
+          )}
+          {tab === 'stats-svc' && (
+            <section className="panel on">
+              <ServiceStats services={services} onExport={() => onExport('svc')} />
             </section>
           )}
         </main>
