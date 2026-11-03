@@ -2,24 +2,26 @@ import { useMemo } from 'react';
 import Bars from './Bars.jsx';
 import { empStats, svcStats } from './stats.js';
 
-export default function Stats({ emps, services, onExport }) {
+const Cards = ({ items }) => (
+  <div className="stats">
+    {items.map(([t, n]) => (
+      <div className="stat" key={t}><b>{n}</b><span>{t}</span></div>
+    ))}
+  </div>
+);
+
+export function EmployeeStats({ emps, onExport }) {
   const e = useMemo(() => empStats(emps), [emps]);
-  const s = useMemo(() => svcStats(services), [services]);
   return (
     <>
-      <div className="stats">
-        {[
-          ['إجمالي الموظفين', e.n], ['موظفات', e.women], ['موظفون (ذكور)', e.men],
-          ['من ذوي الإعاقة', e.disTotal], ['متوسط الجاهزية', `${e.avg}%`], ['إجمالي الخدمات', s.total],
-        ].map(([t, n]) => (
-          <div className="stat" key={t}><b>{n}</b><span>{t}</span></div>
-        ))}
-      </div>
-
+      <Cards items={[
+        ['إجمالي الموظفين', e.n], ['موظفات', e.women], ['موظفون (ذكور)', e.men],
+        ['من ذوي الإعاقة', e.disTotal], ['متوسط الجاهزية', `${e.avg}%`],
+      ]} />
       <div className="card">
         <div className="svc-head">
           <h2>إحصائيات الموظفين</h2>
-          <button className="btn" onClick={onExport}>تنزيل الإحصائيات Excel</button>
+          <button className="btn" onClick={onExport}>تنزيل Excel</button>
         </div>
         <div className="cols">
           <div><h3>مستوى الجاهزية</h3><Bars rows={e.levels} /></div>
@@ -29,17 +31,31 @@ export default function Stats({ emps, services, onExport }) {
           <div><h3>الإدارات (عدد الموظفين)</h3><Bars rows={e.depts.map((d) => [d.dept, d.count])} /></div>
           <div><h3>متوسط الجاهزية بالإدارة</h3><Bars rows={e.depts.map((d) => [d.dept, d.avg])} max={100} fmt={(n) => `${n}%`} /></div>
         </div>
+        <p className="note">ملف Excel يحتوي إحصائيات مجمّعة فقط، بدون أسماء أو أرقام قومية.</p>
       </div>
+    </>
+  );
+}
 
+export function ServiceStats({ services, onExport }) {
+  const s = useMemo(() => svcStats(services), [services]);
+  return (
+    <>
+      <Cards items={[
+        ['إجمالي الخدمات', s.total], ['خدمات المرأة', s.byGroup[0][1]], ['خدمات ذوي الإعاقة', s.byGroup[1][1]],
+        ['قائمة ومستمرة', s.byStatus[0][1]], ['تقدم حسب الطلب', s.byStatus[1][1]], ['مخطط لها', s.byStatus[2][1]],
+      ]} />
       <div className="card">
-        <h2>إحصائيات الخدمات</h2>
+        <div className="svc-head">
+          <h2>إحصائيات الخدمات</h2>
+          <button className="btn" onClick={onExport}>تنزيل Excel</button>
+        </div>
         <div className="cols">
           <div><h3>حسب الفئة</h3><Bars rows={s.byGroup} /></div>
           <div><h3>حسب حالة الخدمة</h3><Bars rows={s.byStatus} /></div>
           <div><h3>حسب نوع الخدمة</h3><Bars rows={s.byType} /></div>
           <div><h3>حسب الجهة المقدمة</h3><Bars rows={s.byProvider} /></div>
         </div>
-        <p className="note">ملف Excel يحتوي إحصائيات مجمّعة فقط، بدون أسماء أو أرقام قومية.</p>
       </div>
     </>
   );
