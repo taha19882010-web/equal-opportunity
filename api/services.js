@@ -22,7 +22,7 @@ export default async function handler(req, res) {
   if (!['GET', 'POST', 'DELETE'].includes(req.method)) {
     return res.status(405).json({ error: 'method not allowed' });
   }
-  if (!(await guard(req, res, req.method !== 'GET' ? 'write' : 'read'))) return;
+  if (!guard(req, res, req.method !== 'GET')) return;
   try {
     await ready();
     if (req.method === 'GET') {
