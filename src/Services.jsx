@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { STATUS, TYPES } from './data.js';
-import { svcStats } from './statsLib.js';
+import { svcStats } from './stats.js';
 import Attachment from './Attachment.jsx';
 
 const GROUP = { w: 'المرأة', d: 'ذوو الإعاقة' };
