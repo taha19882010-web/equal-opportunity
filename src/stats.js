@@ -60,7 +60,7 @@ const widths = (rows) => {
 };
 
 /** Builds an .xlsx with aggregated statistics only (no national IDs) and downloads it. */
-export async function exportStats(emps, services) {
+export async function exportStats(emps, services, which = 'all') {
   const XLSX = await import('xlsx');
   const e = empStats(emps);
   const s = svcStats(services);
@@ -89,10 +89,13 @@ export async function exportStats(emps, services) {
 
   const wb = XLSX.utils.book_new();
   wb.Workbook = { Views: [{ RTL: true }] };
-  [['إحصائيات الموظفين', empRows], ['إحصائيات الخدمات', svcRows]].forEach(([name, rows]) => {
+  [['إحصائيات الموظفين', empRows, 'emps'], ['إحصائيات الخدمات', svcRows, 'svc']]
+    .filter(([, , k]) => which === 'all' || which === k)
+    .forEach(([name, rows]) => {
     const ws = XLSX.utils.aoa_to_sheet(rows);
     ws['!cols'] = widths(rows);
     XLSX.utils.book_append_sheet(wb, ws, name);
   });
-  XLSX.writeFile(wb, `إحصائيات_تكافؤ_الفرص_${today}.xlsx`);
+  const tag = which === 'emps' ? '_الموظفين' : which === 'svc' ? '_الخدمات' : '';
+  XLSX.writeFile(wb, `إحصائيات${tag}_تكافؤ_الفرص_${today}.xlsx`);
 }
