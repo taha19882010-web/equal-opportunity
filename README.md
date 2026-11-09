@@ -3,7 +3,7 @@
 - **Frontend:** React 18 + Vite (`src/`)
 - **Backend:** Vercel Serverless Functions on Node.js (`api/`)
 - **Database:** Postgres (Neon) — tables are created automatically on first request
-- **Auth:** user accounts (username + password, scrypt-hashed) with roles — admin / editor / viewer / pending — and a signed HttpOnly cookie
+- **Auth:** shared passwords (admin = full access, viewer = read only) with a signed HttpOnly cookie
 
 ## Deploy to Vercel
 
@@ -14,11 +14,10 @@
 4. In **Settings → Environment Variables** add:
    | Name | Value |
    |---|---|
-   | `ADMIN_PASSWORD` | password of the first admin account (used once, on first start) |
-   | `ADMIN_USERNAME` | optional, username of that first admin (default `admin`) |
-   | `ALLOW_SIGNUP` | optional, `false` closes self-registration (default `true`) |
+   | `ADMIN_PASSWORD` | a strong password (add / edit / delete / import) |
+   | `VIEWER_PASSWORD` | optional, read-only password |
    | `SESSION_SECRET` | a long random string, e.g. output of `openssl rand -hex 32` |
-5. **Redeploy** so the variables take effect. Open the URL and sign in as the admin. New sign-ups stay *pending* until an admin activates them in the **المستخدمون** tab.
+5. **Redeploy** so the variables take effect. Open the URL and sign in.
 
 ## Run locally
 
@@ -36,13 +35,10 @@ vercel dev          # serves the React app and the /api functions together
 
 | Route | Methods | Access |
 |---|---|---|
-| `/api/session` | GET (who am I), POST `{username,password}` (login), DELETE (logout) | public |
-| `/api/register` | GET (is signup open), POST `{username,fullName,password}` | public |
-| `/api/account` | POST `{oldPassword,newPassword}` | any active user |
-| `/api/users` | GET, PATCH `{id,role?,password?}`, DELETE `?id=` | admin |
-| `/api/employees` | GET, POST `{employees:[…]}` (upsert), DELETE `?id=` | read: any active role · write: admin / editor |
-| `/api/services` | GET, POST `{service}`, DELETE `?id=` | read: any active role · write: admin / editor |
-| `/api/settings` | GET `?key=logo`, PUT `{key,value}` | read: any active role · write: admin / editor |
+| `/api/session` | GET (who am I), POST (login), DELETE (logout) | public |
+| `/api/employees` | GET, POST `{employees:[…]}` (upsert), DELETE `?id=` | read: any role · write: admin |
+| `/api/services` | GET, POST `{service}`, DELETE `?id=` | read: any role · write: admin |
+| `/api/settings` | GET `?key=logo`, PUT `{key,value}` | read: any role · write: admin |
 
 ## Notes
 

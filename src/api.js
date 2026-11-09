@@ -12,18 +12,11 @@ async function req(path, opts = {}) {
   }
   return j;
 }
-export const fileUrl = (id) => `/api/files?id=${encodeURIComponent(id)}`;
 const body = (o) => ({ body: JSON.stringify(o) });
 
 export const api = {
   session: () => req('/api/session'),
-  login: (username, password) => req('/api/session', { method: 'POST', ...body({ username, password }) }),
-  signupEnabled: () => req('/api/register'),
-  register: (data) => req('/api/register', { method: 'POST', ...body(data) }),
-  changePassword: (oldPassword, newPassword) => req('/api/account', { method: 'POST', ...body({ oldPassword, newPassword }) }),
-  users: () => req('/api/users'),
-  updateUser: (id, patch) => req('/api/users', { method: 'PATCH', ...body({ id, ...patch }) }),
-  deleteUser: (id) => req(`/api/users?id=${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  login: (password) => req('/api/session', { method: 'POST', ...body({ password }) }),
   logout: () => req('/api/session', { method: 'DELETE' }),
   employees: () => req('/api/employees'),
   saveEmployees: (employees) => req('/api/employees', { method: 'POST', ...body({ employees }) }),
@@ -32,15 +25,6 @@ export const api = {
   services: () => req('/api/services'),
   saveService: (service) => req('/api/services', { method: 'POST', ...body({ service }) }),
   deleteService: (id) => req(`/api/services?id=${encodeURIComponent(id)}`, { method: 'DELETE' }),
-  uploadFile: async (file) => {
-    const data = await new Promise((res, rej) => {
-      const r = new FileReader();
-      r.onload = () => res(String(r.result).split(',')[1]);
-      r.onerror = () => rej(new Error('تعذّرت قراءة الملف.'));
-      r.readAsDataURL(file);
-    });
-    return req('/api/files', { method: 'POST', ...body({ name: file.name, mime: file.type, data }) });
-  },
   getLogo: () => req('/api/settings?key=logo'),
   setLogo: (value) => req('/api/settings', { method: 'PUT', ...body({ key: 'logo', value }) }),
 };

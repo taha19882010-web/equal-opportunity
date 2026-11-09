@@ -13,16 +13,11 @@ async function seedOnce() {
   ]);
 }
 
-const attachedFile = async (id) => {
-  const rows = await sql`SELECT data->'file'->>'id' AS fid FROM services WHERE id = ${id}`;
-  return rows[0]?.fid || null;
-};
-
 export default async function handler(req, res) {
   if (!['GET', 'POST', 'DELETE'].includes(req.method)) {
     return res.status(405).json({ error: 'method not allowed' });
   }
-  if (!(await guard(req, res, req.method !== 'GET'))) return;
+  if (!guard(req, res, req.method !== 'GET')) return;
   try {
     await ready();
     if (req.method === 'GET') {
@@ -33,16 +28,11 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
       const s = cleanService(req.body?.service);
       if (!s) return res.status(400).json({ error: 'اكتب اسم الخدمة.' });
-      const oldFile = await attachedFile(s.id);
       await sql`INSERT INTO services (id, data) VALUES (${s.id}, ${JSON.stringify(s)}::jsonb)
                 ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`;
-      if (oldFile && oldFile !== s.file?.id) await sql`DELETE FROM files WHERE id = ${oldFile}`;
       return res.json({ ok: true });
     }
-    const id = String(req.query.id || '');
-    const oldFile = await attachedFile(id);
-    await sql`DELETE FROM services WHERE id = ${id}`;
-    if (oldFile) await sql`DELETE FROM files WHERE id = ${oldFile}`;
+    await sql`DELETE FROM services WHERE id = ${String(req.query.id || '')}`;
     return res.json({ ok: true });
   } catch (e) {
     console.error(e);
