@@ -30,5 +30,9 @@ export function cleanService(s) {
     ? [...new Set(s.types.map((x) => str(x, 60).trim()).filter(Boolean))].slice(0, 12)
     : [];
   const status = ['ongoing', 'ondemand', 'planned'].includes(s.status) ? s.status : '';
-  return { id, g: s.g === 'd' ? 'd' : 'w', t, w: str(s.w), types, status, b: str(s.b, 4000) };
+  const f = s.file;
+  const file = f && /^[\w-]+$/.test(str(f.id, 64))
+    ? { id: str(f.id, 64), name: str(f.name, 150), mime: str(f.mime, 40), size: Number(f.size) || 0 }
+    : null;
+  return { id, g: s.g === 'd' ? 'd' : 'w', t, w: str(s.w), types, status, b: str(s.b, 4000), file };
 }
