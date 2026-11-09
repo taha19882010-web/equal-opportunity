@@ -9,7 +9,7 @@ import Services from './Services.jsx';
 import ServiceForm from './ServiceForm.jsx';
 import UsersAdmin, { ROLE_LABEL } from './UsersAdmin.jsx';
 import Account from './Account.jsx';
-import { EmployeeStats, ServiceStats } from './StatsPages.jsx';
+import { EmployeeStats, ServiceStats } from './Stats.jsx';
 import { exportStats } from './statsLib.js';
 
 const NAV = [
