@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { api } from './api.js';
 import { parseEmployees, toTsv } from './lib.js';
 import { useUI } from './ui.jsx';
@@ -297,6 +298,7 @@ export default function App() {
         </main>
       </div>
       {ui}
+      <Analytics />
     </div>
   );
 }
